@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TACHI-COM v2.1 — Section 9 Intranet Terminal</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23064a52'/%3E%3Ccircle cx='8' cy='8' r='5' fill='%232f7fd0'/%3E%3Ccircle cx='8' cy='8' r='2' fill='%23ffb037'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/xp.css">
+</head>
+<body>
+
+<!-- ══ BOOT SPLASH ══ -->
+<div id="boot">
+  <pre id="boot-text"></pre>
+  <div id="boot-hint">— click to skip —</div>
+</div>
+
+<!-- ══ THE NET (animated backdrop) ══ -->
+<canvas id="net-bg"></canvas>
+<div id="scanlines"></div>
+
+<!-- ══ DESKTOP ══ -->
+<div id="desktop">
+
+  <!-- desktop icons -->
+  <div class="dicons">
+    <div class="dicon" data-win="win-chat"><span class="dicon-img">🗨️</span><span>TACHI-COM</span></div>
+    <div class="dicon" data-win="win-sessions"><span class="dicon-img">🗂️</span><span>Sessions</span></div>
+    <div class="dicon" data-win="win-settings"><span class="dicon-img">🛠️</span><span>Settings</span></div>
+    <div class="dicon" data-win="win-monitor"><span class="dicon-img">📡</span><span>Net Monitor</span></div>
+  </div>
+
+  <!-- ── MAIN CHAT WINDOW ── -->
+  <div class="win" id="win-chat" style="left:230px;top:34px;width:640px;height:560px">
+    <div class="tbar">
+      <span class="ticon">🗨️</span><span class="ttext">TACHI-COM v2.1 — Section 9 Secure Chat</span>
+      <span class="tbtns"><button class="tb" data-act="min">_</button><button class="tb" data-act="max">□</button><button class="tb tb-x" data-act="close">×</button></span>
+    </div>
+    <div class="menubar" id="chat-menubar">
+      <span class="menu" data-menu="file">File</span>
+      <span class="menu" data-menu="session">Session</span>
+      <span class="menu" data-menu="view">View</span>
+      <span class="menu" data-menu="settings">Settings</span>
+      <span class="menu" data-menu="help">Help</span>
+    </div>
+    <div class="toolbar">
+      <button class="xbtn" id="tb-new" title="New session">🆕 New</button>
+      <button class="xbtn" id="tb-sessions" title="Open sessions list">🗂️ Sessions</button>
+      <button class="xbtn" id="tb-settings" title="Open settings">🛠️ Config</button>
+      <span class="tsep"></span>
+      <button class="xbtn" id="tb-regen" title="Regenerate last reply">♻️ Regen</button>
+      <button class="xbtn" id="tb-think" title="Cycle thinking view: collapsed / expanded / hidden">🧠 <span id="tb-think-label">Collapsed</span></button>
+      <span class="tsep"></span>
+      <span class="chat-title-chip" id="chat-title-chip">no session</span>
+    </div>
+    <div class="win-body chat-body">
+      <div id="chat-log" class="console"></div>
+      <div id="chat-input-row">
+        <textarea id="input" rows="3" spellcheck="false"
+          placeholder="Transmit to the uplink...  (Enter to send · Shift+Enter for newline)"></textarea>
+        <div class="btn-col">
+          <button class="xbtn xbtn-go" id="send-btn">▶ SEND</button>
+          <button class="xbtn xbtn-stop" id="stop-btn" disabled>■ HALT</button>
+        </div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span class="sb-cell" id="sb-conn"><span class="led led-off" id="conn-led"></span><span id="conn-text">LINK…</span></span>
+      <span class="sb-cell sb-model" id="sb-model" title="model">—</span>
+      <span class="sb-cell sb-ctx">
+        <span class="ctx-label" id="ctx-label">CTX 0/8196</span>
+        <span class="ctx-meter"><span class="ctx-fill" id="ctx-fill"></span><span class="ctx-tick" id="ctx-tick"></span></span>
+      </span>
+      <span class="sb-cell" id="sb-tps">0.0 t/s</span>
+    </div>
+  </div>
+
+  <!-- ── SESSIONS WINDOW ── -->
+  <div class="win" id="win-sessions" style="left:18px;top:120px;width:270px;height:380px" hidden>
+    <div class="tbar">
+      <span class="ticon">🗂️</span><span class="ttext">Session Archive</span>
+      <span class="tbtns"><button class="tb" data-act="min">_</button><button class="tb tb-x" data-act="close">×</button></span>
+    </div>
+    <div class="toolbar">
+      <button class="xbtn" id="sess-new">New</button>
+      <button class="xbtn" id="sess-rename">Rename</button>
+      <button class="xbtn" id="sess-copy">Copy</button>
+      <button class="xbtn" id="sess-del">Delete</button>
+    </div>
+    <div class="win-body">
+      <div id="sess-list" class="listbox"></div>
+      <div class="toolbar toolbar-b">
+        <button class="xbtn" id="sess-export-json">Save .json</button>
+        <button class="xbtn" id="sess-export-txt">Save .txt</button>
+        <button class="xbtn" id="sess-clear">Clear msgs</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS WINDOW ── -->
+  <div class="win" id="win-settings" style="left:180px;top:60px;width:520px;height:540px" hidden>
+    <div class="tbar">
+      <span class="ticon">🛠️</span><span class="ttext">System Configuration — cyberbrain interface</span>
+      <span class="tbtns"><button class="tb" data-act="min">_</button><button class="tb tb-x" data-act="close">×</button></span>
+    </div>
+    <div class="tabstrip" id="settings-tabs">
+      <span class="tab tab-on" data-tab="tab-conn">Uplink</span>
+      <span class="tab" data-tab="tab-samp">Sampling</span>
+      <span class="tab" data-tab="tab-ctx">Context</span>
+      <span class="tab" data-tab="tab-persona">Persona</span>
+      <span class="tab" data-tab="tab-tpl">Template</span>
+      <span class="tab" data-tab="tab-ui">Interface</span>
+    </div>
+    <div class="win-body settings-body">
+
+      <div class="tabpage" id="tab-conn">
+        <fieldset><legend>OpenAI-compatible endpoint</legend>
+          <label class="frow"><span>Endpoint URL</span><input id="set-endpoint" type="text" spellcheck="false"></label>
+          <label class="frow"><span>API key</span><input id="set-api_key" type="password" spellcheck="false" placeholder="(optional)"></label>
+          <label class="frow"><span>Model</span>
+            <span class="hrow"><select id="set-model"><option value="">(first available)</option></select>
+            <button class="xbtn" id="btn-test">Test connection</button></span></label>
+          <div id="test-result" class="minicon">no probe yet — hit Test connection.</div>
+        </fieldset>
+        <fieldset><legend>Pulled from endpoint</legend>
+          <div class="frow"><span>Server ctx</span><span id="pulled-nctx" class="pull-val">—</span></div>
+          <div class="frow"><span>Server sampling</span><span id="pulled-samp" class="pull-val">—</span></div>
+          <div class="frow"><span></span><button class="xbtn" id="btn-pull-samp">Apply server sampling defaults</button></div>
+        </fieldset>
+      </div>
+
+      <div class="tabpage" id="tab-samp" hidden>
+        <fieldset><legend>Sampling — passed verbatim to the endpoint</legend>
+          <div class="sgrid">
+            <label>temperature<input id="samp-temperature" type="number" step="0.05"></label>
+            <label>top_p<input id="samp-top_p" type="number" step="0.01" min="0" max="1"></label>
+            <label>top_k<input id="samp-top_k" type="number" step="1" min="0"></label>
+            <label>min_p<input id="samp-min_p" type="number" step="0.01" min="0" max="1"></label>
+            <label>typical_p<input id="samp-typical_p" type="number" step="0.01" min="0" max="1"></label>
+            <label>repeat_penalty<input id="samp-repeat_penalty" type="number" step="0.01"></label>
+            <label>repeat_last_n<input id="samp-repeat_last_n" type="number" step="1"></label>
+            <label>presence_penalty<input id="samp-presence_penalty" type="number" step="0.05"></label>
+            <label>frequency_penalty<input id="samp-frequency_penalty" type="number" step="0.05"></label>
+            <label>max_tokens<input id="samp-max_tokens" type="number" step="1" min="1"></label>
+            <label>seed (−1 = random)<input id="samp-seed" type="number" step="1"></label>
+          </div>
+        </fieldset>
+        <div class="hint">Field names above are the exact keys sent in the /v1/chat/completions payload.</div>
+      </div>
+
+      <div class="tabpage" id="tab-ctx" hidden>
+        <fieldset><legend>Context window</legend>
+          <label class="frow"><span>Context length (tokens)</span><input id="set-context_length" type="number" step="4" min="512"></label>
+          <label class="frow"><span>Trim threshold</span>
+            <span class="hrow"><input id="set-context_fill_ratio" type="range" min="30" max="95" step="1">
+            <span id="fill-label" class="pull-val">75%</span></span></label>
+          <div class="hint">When the prompt exceeds the threshold, whole messages fall
+          out of the middle of the conversation (oldest first). The system message and
+          the most recent messages are always kept, and cuts land cleanly between
+          messages.</div>
+        </fieldset>
+        <fieldset><legend>Streaming</legend>
+          <label class="frow chk"><input id="set-stream" type="checkbox"><span>Stream tokens as they generate</span></label>
+        </fieldset>
+      </div>
+
+      <div class="tabpage" id="tab-persona" hidden>
+        <fieldset><legend>System message</legend>
+          <textarea id="set-system_prompt" rows="7" spellcheck="false"></textarea>
+          <div class="hint">Sent as the <b>system</b> role message; the chat template
+          renders it at the top of every prompt. Kept through all context trims.</div>
+        </fieldset>
+        <fieldset><legend>Names</legend>
+          <label class="frow"><span>Your name (user)</span><input id="set-user_name" type="text"></label>
+          <label class="frow"><span>Bot display name</span><input id="set-bot_name" type="text"></label>
+        </fieldset>
+        <fieldset><legend>Thinking</legend>
+          <label class="frow chk"><input id="set-think-enabled" type="checkbox"><span>Enable model thinking (enable_thinking)</span></label>
+          <label class="frow"><span>Thinking display</span>
+            <select id="set-think-display">
+              <option value="collapsed">Compacted (click to expand)</option>
+              <option value="expanded">Always expanded</option>
+              <option value="hidden">Hidden from chat</option>
+            </select></label>
+        </fieldset>
+      </div>
+
+      <div class="tabpage" id="tab-tpl" hidden>
+        <fieldset><legend>Prompt / instruct template</legend>
+          <div class="frow radio-row">
+            <label><input type="radio" name="tplmode" value="auto"> Auto — use template pulled from model</label>
+            <label><input type="radio" name="tplmode" value="preset"> Preset:</label>
+            <select id="set-template_preset"></select>
+            <label><input type="radio" name="tplmode" value="custom"> Custom (edit below)</label>
+          </div>
+          <textarea id="tpl-editor" rows="9" spellcheck="false" class="mono"></textarea>
+          <div class="hrow">
+            <button class="xbtn" id="btn-tpl-pull">Load template pulled from model</button>
+            <button class="xbtn" id="btn-tpl-preset">Load selected preset</button>
+          </div>
+          <div class="hint">In Auto mode the endpoint applies the model's own Jinja
+          template. Preset/Custom are sent as <b>chat_template</b> with the request.</div>
+        </fieldset>
+      </div>
+
+      <div class="tabpage" id="tab-ui" hidden>
+        <fieldset><legend>Interface</legend>
+          <label class="frow chk"><input id="set-ui-scanlines" type="checkbox"><span>CRT scanlines</span></label>
+          <label class="frow chk"><input id="set-ui-animations" type="checkbox"><span>Net rain + animations</span></label>
+          <label class="frow chk"><input id="set-ui-netmon" type="checkbox"><span>Net Monitor window on start</span></label>
+        </fieldset>
+        <div class="hint">Settings are stored server-side — every open view of this
+        console stays in sync automatically.</div>
+      </div>
+
+    </div>
+    <div class="statusbar settings-foot">
+      <span class="sb-cell" id="settings-dirty">saved</span>
+      <span class="sb-spacer"></span>
+      <button class="xbtn xbtn-go" id="btn-save-settings">💾 Save</button>
+      <button class="xbtn" id="btn-revert-settings">Revert</button>
+    </div>
+  </div>
+
+  <!-- ── NET MONITOR ── -->
+  <div class="win" id="win-monitor" style="left:900px;top:330px;width:330px;height:300px" hidden>
+    <div class="tbar">
+      <span class="ticon">📡</span><span class="ttext">Net Monitor — ghost line</span>
+      <span class="tbtns"><button class="tb" data-act="min">_</button><button class="tb tb-x" data-act="close">×</button></span>
+    </div>
+    <div class="win-body monitor-body">
+      <canvas id="spectrum" width="310" height="110"></canvas>
+      <div id="net-log" class="minicon netlog"></div>
+    </div>
+  </div>
+
+  <!-- ── ABOUT ── -->
+  <div class="win" id="win-about" style="left:340px;top:180px;width:360px;height:240px" hidden>
+    <div class="tbar">
+      <span class="ticon">👻</span><span class="ttext">About TACHI-COM</span>
+      <span class="tbtns"><button class="tb tb-x" data-act="close">×</button></span>
+    </div>
+    <div class="win-body about-body">
+      <div class="about-logo">TACHI-COM <span>v2.1</span></div>
+      <div class="about-sub">Section 9 Intranet Terminal · Stand Alone Complex build</div>
+      <p>An XP-era chat console wired into any OpenAI-compatible uplink.
+      All think-tank chatter is logged for post-mission analysis.</p>
+      <p class="about-quote">“The net is vast and infinite.”</p>
+    </div>
+  </div>
+
+  <!-- ── PROMPT DIALOG (rename etc.) ── -->
+  <div class="win win-dialog" id="win-prompt" style="left:320px;top:220px;width:320px" hidden>
+    <div class="tbar"><span class="ticon">✏️</span><span class="ttext" id="prompt-title">Input</span>
+      <span class="tbtns"><button class="tb tb-x" data-act="close">×</button></span></div>
+    <div class="win-body dialog-body">
+      <div id="prompt-label" class="hint"></div>
+      <input id="prompt-input" type="text" spellcheck="false">
+      <div class="hrow dialog-btns">
+        <button class="xbtn xbtn-go" id="prompt-ok">OK</button>
+        <button class="xbtn" id="prompt-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TACHIKOMA MASCOT ── -->
+  <div id="mascot" title="Tachikoma unit 07 — click me!">
+    <div id="mascot-bubble" hidden></div>
+    <svg viewBox="0 0 120 100" width="110" height="92">
+      <!-- legs -->
+      <g stroke="#33628f" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M30 62 L14 78 L12 92"/>
+        <path d="M44 66 L36 82 L38 94"/>
+        <path d="M78 66 L88 82 L86 94"/>
+        <path d="M92 62 L108 78 L110 92"/>
+      </g>
+      <g fill="#4a7fb5"><circle cx="12" cy="93" r="4"/><circle cx="38" cy="95" r="4"/><circle cx="86" cy="95" r="4"/><circle cx="110" cy="93" r="4"/></g>
+      <!-- pod (back cockpit) -->
+      <ellipse cx="78" cy="38" rx="24" ry="18" fill="#5b93cc" stroke="#2d5b8a" stroke-width="2"/>
+      <rect x="66" y="24" width="24" height="10" rx="5" fill="#7fb2e0"/>
+      <!-- body -->
+      <ellipse cx="46" cy="52" rx="30" ry="22" fill="#4a86c2" stroke="#2d5b8a" stroke-width="2"/>
+      <!-- side eyes -->
+      <circle cx="26" cy="46" r="6" fill="#dfe9f2" stroke="#2d5b8a" stroke-width="1.5"/>
+      <circle cx="26" cy="46" r="2.6" class="m-eye" fill="#3ddcc0"/>
+      <circle cx="66" cy="46" r="6" fill="#dfe9f2" stroke="#2d5b8a" stroke-width="1.5"/>
+      <circle cx="66" cy="46" r="2.6" class="m-eye" fill="#3ddcc0"/>
+      <!-- main eye -->
+      <circle cx="46" cy="52" r="11" fill="#e8f2fa" stroke="#2d5b8a" stroke-width="2"/>
+      <circle cx="46" cy="52" r="6" class="m-eye m-eye-main" fill="#38d6bb"/>
+      <circle cx="48" cy="50" r="1.8" fill="#ffffff"/>
+      <!-- front arms -->
+      <g stroke="#33628f" stroke-width="4" stroke-linecap="round" fill="none">
+        <path d="M24 60 L12 66"/><path d="M68 60 L80 68"/>
+      </g>
+    </svg>
+  </div>
+
+</div>
+
+<!-- ══ TASKBAR ══ -->
+<div id="taskbar">
+  <button id="start-btn"><span class="start-orb">👻</span> Start</button>
+  <div id="task-buttons"></div>
+  <div id="tray">
+    <span class="led led-off" id="tray-led" title="uplink status"></span>
+    <span id="tray-ctx" title="context usage">0%</span>
+    <span id="tray-clock">--:-- --<br><span id="tray-date"></span></span>
+  </div>
+</div>
+
+<!-- start menu -->
+<div id="start-menu" hidden>
+  <div class="sm-side">TACHI-COM<span>v2.1</span></div>
+  <div class="sm-items">
+    <div class="sm-item" data-win="win-chat">🗨️ Chat Terminal</div>
+    <div class="sm-item" data-win="win-sessions">🗂️ Session Archive</div>
+    <div class="sm-item" data-win="win-settings">🛠️ Configuration</div>
+    <div class="sm-item" data-win="win-monitor">📡 Net Monitor</div>
+    <div class="sm-sep"></div>
+    <div class="sm-item" data-win="win-about">👻 About</div>
+    <div class="sm-item" id="sm-reboot">🔄 Reboot interface</div>
+  </div>
+</div>
+
+<div id="menu-popup" hidden></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
